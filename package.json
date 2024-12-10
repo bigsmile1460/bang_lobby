@@ -1,0 +1,31 @@
+{
+  "name": "bangbangbang",
+  "version": "1.0.0",
+  "description": "Bang!Bang!Bang! 최종 프로젝트",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "migrate": "node src/db/migration/createSchema.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "nodemon": "^3.1.7",
+    "prettier": "^3.3.3"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "class-transformer": "^0.5.1",
+    "dotenv": "^16.4.5",
+    "ioredis": "^5.4.1",
+    "joi": "^17.13.3",
+    "jsonwebtoken": "^9.0.2",
+    "mysql2": "^3.11.4",
+    "protobufjs": "^7.4.0",
+    "redis": "^4.7.0",
+    "uuid": "^11.0.3"
+  }
+}
