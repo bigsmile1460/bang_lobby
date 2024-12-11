@@ -7,7 +7,7 @@ import { registerHandler } from './user/register.handler.js';
 import { createRoomHandler } from './room/createRoom.handler.js';
 import { leaveRoomHandler } from './room/leaveRoom.handler.js';
 import { gamePrepareHandler } from './room/prepare.handler.js';
-import { gameStartHandler } from './room/gameStart.handler.js';
+// import { gameStartHandler } from './room/gameStart.handler.js';
 
 const handlers = {
   [PACKET_TYPE.REGISTER_REQUEST]: { handler: registerHandler },
@@ -18,7 +18,7 @@ const handlers = {
   [PACKET_TYPE.JOIN_RANDOM_ROOM_REQUEST]: { handler: joinRandomRoomHandler },
   [PACKET_TYPE.LEAVE_ROOM_REQUEST]: { handler: leaveRoomHandler },
   [PACKET_TYPE.GAME_PREPARE_REQUEST]: { handler: gamePrepareHandler },
-  [PACKET_TYPE.GAME_START_REQUEST]: { handler: gameStartHandler },
+  // [PACKET_TYPE.GAME_START_REQUEST]: { handler: gameStartHandler },
 };
 
 export const getHandlerByPacketType = (packetType) => {
