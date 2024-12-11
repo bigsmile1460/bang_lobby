@@ -1,7 +1,3 @@
-import { gameEndNotification } from '../../utils/notification/gameEnd.notification.js';
-import { deadCheck } from '../../utils/notification/deadCheck.notification.js';
-import { pinkCheck } from '../../utils/notification/pinkCheck.notification.js';
-
 class IntervalManager {
   constructor() {
     this.intervals = new Map();
@@ -15,26 +11,6 @@ class IntervalManager {
     this.intervals.get(id).set(eventName, setInterval(callback, interval));
   }
 
-  addGameEndNotification(room, interval = 3000, eventName = 'gameEnd') {
-    this.addInterval(
-      room.id,
-      () => {
-        if (!room) {
-          this.removeInterval(room.id, eventName);
-        }
-        gameEndNotification(room);
-      },
-      interval,
-    );
-  }
-
-  addDeathPlayer(room, interval = 1000) {
-    this.addInterval(room.id, () => deadCheck(room), interval, 'checkDeathPlayer');
-  }
-
-  addHandCardCheck(room, interval = 1000) {
-    this.addInterval(room.id, () => pinkCheck(room), interval, 'pink');
-  }
 
   removeInterval(id, eventName) {
     const intervals = this.intervals.get(id);

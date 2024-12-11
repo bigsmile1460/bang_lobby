@@ -37,19 +37,41 @@ class RedisManager {
       console.error(e);
     }
   }
-  async setUser(key, value) {
+
+  async setHash(key, field, value) {
     try {
-      await this.redisClient.hset(key, value);
+      await this.redisClient.hset(key, field, value);
     } catch (e) {
       console.error(e);
     }
   }
 
-  async getUser(key) {
+  async getHash(key, field) {
     try {
-      const userData = await this.redisClient.hgetall(key);
-      if (Object.keys(userData).length > 0) {
-        return userData;
+      const value = await this.redisClient.hget(key, field);
+      // console.log(`Key "${key}"의 값:`, value);
+      return JSON.parse(value);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async hashLength(key) {
+    try {
+      const length = await this.redisClient.hlen(key);
+      console.log(`Key "${key}"의 길이:`, length);
+      return length;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+
+  async getAllHash(key) {
+    try {
+      const getData = await this.redisClient.hgetall(key);
+      if (Object.keys(getData).length > 0) {
+        return getData;
       } else {
         return null;
       }
@@ -57,10 +79,35 @@ class RedisManager {
       console.error(e);
     }
   }
-
-  async delUser(key){
+  async getHkeys(key) {
+    try {
+      const result = await this.redisClient.hkeys(key);
+      return JSON.parse(result);
+    } catch(e) {
+      console.error(e);
+    }
+  }
+  async hExists(key, field) {
+    try {
+      const result = this.redisClient.hexists(key, field);
+      return result;
+    } catch(e) {
+      console.error(e);
+    }
+  }
+  async getHvals(key){
     try{
-        await this.redisClient.del(key);
+      const result = await this.redisClient.hvals(key);
+      return result;
+    }
+    catch(e){
+    }
+  }
+  //TODO: 해쉬 내부의 특정 값만 삭제할 수 있는 함수
+  // hdel(room, 2), hlen(room) -> 필드 개수 길이
+  async delHash(key, field){
+    try{
+        await this.redisClient.hdel(key, field);
     }
     catch(e){
         console.error(e)
@@ -71,7 +118,7 @@ class RedisManager {
     try {
       const value = await this.redisClient.get(key);
       console.log(`Key "${key}"의 값:`, value);
-      return value;
+      return JSON.parse(value);
     } catch (e) {
       console.error(e);
     }
@@ -120,6 +167,7 @@ class RedisManager {
     this.redisClient.quit();
     console.log('레디스 연결 해제');
   }
+
 }
 
 export default RedisManager;

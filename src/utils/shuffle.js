@@ -45,15 +45,7 @@ export const shuffledRoleType = (inGameUsers) => {
     ],
   };
 
-  // roleType 배분
-  const roleTypeClone = roleTypes[inGameUsers.length];
-  const shuffledRoleType = shuffle(roleTypeClone);
-  inGameUsers.forEach((user, i) => {
-    user.setCharacterRoleType(shuffledRoleType[i]);
-    if (user.characterData.roleType === Packets.RoleType.TARGET) {
-      user.increaseHp();
-    }
-  });
+
 };
 
 export const shuffledCharacter = (inGameUsers) => {
@@ -69,8 +61,38 @@ export const shuffledCharacter = (inGameUsers) => {
     { type: Packets.CharacterType.PINK_SLIME },
   ];
 
-  const shuffledCharacter = shuffle(characterList).splice(0, inGameUsers.length);
-  inGameUsers.forEach((user, i) => {
-    user.setCharacter(shuffledCharacter[i].type);
-  });
+  
 };
+
+export const setUpGame = (inGameUsers) => {
+  //TODO: 레디스로 변경
+  const roleTypes = loadRolesFromDB()
+  const cardDeck = loadCardDeckFromDB()
+  const characterList = loadCharactersFromDB()
+
+    // roleType 배분
+    const roleTypeClone = roleTypes[inGameUsers.length];
+    const shuffledRoleType = shuffle(roleTypeClone);
+    inGameUsers.forEach((user, i) => {
+      user.setCharacterRoleType(shuffledRoleType[i]);
+      if (user.characterData.roleType === Packets.RoleType.TARGET) {
+        user.increaseHp();
+      }
+    });
+
+    // 캐릭터 배분
+    const shuffledCharacter = shuffle(characterList).splice(0, inGameUsers.length);
+    inGameUsers.forEach((user, i) => {
+    user.setCharacter(shuffledCharacter[i].type);
+    });
+
+    const deck = shuffle(cardDeck);
+
+    // 카드 배분
+    inGameUsers.forEach((user) => {
+      const gainCards = deck.splice(0, user.characterData.hp);
+      gainCards.forEach((card) => user.addHandCard(card));
+    });
+
+    return deck; // currentGame.deck 에 리턴된 덱 넣기?
+}
