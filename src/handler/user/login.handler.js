@@ -51,7 +51,7 @@ export const loginHandler = async (socket, payload) => {
     }
 
     // 기존 세션에 있는 유저면 로그인 불가
-    const loginedUser = await getUser(socket.jwt);
+    const loginedUser = JSON.parse(await getUser(socket.jwt));
     if (loginedUser) {
       const errorMessage = '이미 사용중인 아이디입니다.';
       console.error(errorMessage);
@@ -74,7 +74,7 @@ export const loginHandler = async (socket, payload) => {
     const id = user.id;
     const nickname = user.nickname;
     const newUser = new User(id, nickname, socket);
-    addUser(socket.jwt, newUser);
+    await addUser(socket.jwt, newUser);
     
     const responsePayload = {
       loginResponse: {
