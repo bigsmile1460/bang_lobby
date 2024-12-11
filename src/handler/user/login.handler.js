@@ -7,11 +7,12 @@ import bcrypt from 'bcrypt';
 import { addUser, getUser } from '../../sessions/user.session.js';
 import User from '../../classes/model/user.class.js';
 import jwt from 'jsonwebtoken';
+import { socketManager } from '../../classes/manager/SocketManager.js';
 
 export const loginHandler = async (socket, payload) => {
   const { email, password } = payload.loginRequest;
   console.log(payload.loginRequest)
-  socket.jwt = jwt.sign({ email, password }, config.jwt.SCRET_KEY, { expiresIn: '24h' });
+  socket.jwt = jwt.sign({ id:email, password }, config.jwt.SCRET_KEY, { expiresIn: '24h' });
   console.log("socket:",socket.jwt);
   try {
     const user = await findUserByEmail(email);
@@ -51,7 +52,7 @@ export const loginHandler = async (socket, payload) => {
     }
 
     // 기존 세션에 있는 유저면 로그인 불가
-    const loginedUser = JSON.parse(await getUser(socket.jwt));
+    const loginedUser = await getUser(socket.jwt);
     if (loginedUser) {
       const errorMessage = '이미 사용중인 아이디입니다.';
       console.error(errorMessage);
@@ -75,7 +76,12 @@ export const loginHandler = async (socket, payload) => {
     const nickname = user.nickname;
     const newUser = new User(id, nickname, socket);
     await addUser(socket.jwt, newUser);
-    
+
+    socketManager.addSocket(socket.jwt, socket);
+
+    //JWT가 레디스 키가 되고 유저의 정보들이 벨류로 들어가고.
+    //JWT를 통해서 유저의 정보를 다시 불러올 수 있게
+
     const responsePayload = {
       loginResponse: {
         success: true,
