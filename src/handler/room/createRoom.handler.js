@@ -8,7 +8,7 @@ import Game from '../../classes/model/game.class.js';
 
 export const createRoomHandler = async (socket, payload) => {
   const { name, maxUserNum } = payload.createRoomRequest;
-  const user = JSON.parse(await getUser(socket.jwt));
+  const user = await getUser(socket.jwt);
 
   if (!user) {
     throw new CustomError(`유저를 찾을 수 없음`);
