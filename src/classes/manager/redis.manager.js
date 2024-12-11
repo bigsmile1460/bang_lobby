@@ -38,7 +38,6 @@ class RedisManager {
     }
   }
 
-  // setHash(room, 2, {})
   async setHash(key, field, value) {
     try {
       await this.redisClient.hset(key, field, value);
@@ -51,7 +50,7 @@ class RedisManager {
     try {
       const value = await this.redisClient.hget(key, field);
       // console.log(`Key "${key}"의 값:`, value);
-      return value;
+      return JSON.parse(value);
     } catch (e) {
       console.error(e);
     }
@@ -67,22 +66,7 @@ class RedisManager {
     }
   }
 
-  // hexists(key, field) find -> exists
-  // hget(key, field) -> value
-  // hgetAll(key) -> 모든 field-value
-  /**
-   * redis> HSET myhash field1 "Hello"
-(integer) 1
-redis> HSET myhash field2 "World"
-(integer) 1
-redis> HGETALL myhash
-1) "field1"  "1"
-2) "Hello"   "wfejifdlfsdkf"
-3) "field2"  '2'
-4) "World"   'roomInfo'
-redis> 
 
-   */
   async getAllHash(key) {
     try {
       const getData = await this.redisClient.hgetall(key);
@@ -98,7 +82,7 @@ redis>
   async getHkeys(key) {
     try {
       const result = await this.redisClient.hkeys(key);
-      return result;
+      return JSON.parse(result);
     } catch(e) {
       console.error(e);
     }
@@ -113,11 +97,10 @@ redis>
   }
   async getHvals(key){
     try{
-      const result = this.redisClient.hvals(key);
+      const result = await this.redisClient.hvals(key);
       return result;
     }
     catch(e){
-      console.error(e);
     }
   }
   //TODO: 해쉬 내부의 특정 값만 삭제할 수 있는 함수
@@ -135,7 +118,7 @@ redis>
     try {
       const value = await this.redisClient.get(key);
       console.log(`Key "${key}"의 값:`, value);
-      return value;
+      return JSON.parse(value);
     } catch (e) {
       console.error(e);
     }
@@ -184,6 +167,7 @@ redis>
     this.redisClient.quit();
     console.log('레디스 연결 해제');
   }
+
 }
 
 export default RedisManager;
