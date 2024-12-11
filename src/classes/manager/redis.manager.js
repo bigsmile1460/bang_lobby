@@ -37,19 +37,57 @@ class RedisManager {
       console.error(e);
     }
   }
-  async setUser(key, value) {
+
+  // setHash(room, 2, {})
+  async setHash(key, field, value) {
     try {
-      await this.redisClient.hset(key, value);
+      await this.redisClient.hset(key, field, value);
     } catch (e) {
       console.error(e);
     }
   }
 
-  async getUser(key) {
+  async getHash(key, field) {
     try {
-      const userData = await this.redisClient.hgetall(key);
-      if (Object.keys(userData).length > 0) {
-        return userData;
+      const value = await this.redisClient.hget(key, field);
+      // console.log(`Key "${key}"의 값:`, value);
+      return value;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async hashLength(key) {
+    try {
+      const length = await this.redisClient.hlen(key);
+      console.log(`Key "${key}"의 길이:`, length);
+      return length;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // hexists(key, field) find -> exists
+  // hget(key, field) -> value
+  // hgetAll(key) -> 모든 field-value
+  /**
+   * redis> HSET myhash field1 "Hello"
+(integer) 1
+redis> HSET myhash field2 "World"
+(integer) 1
+redis> HGETALL myhash
+1) "field1"  "1"
+2) "Hello"   "wfejifdlfsdkf"
+3) "field2"  '2'
+4) "World"   'roomInfo'
+redis> 
+
+   */
+  async getAllHash(key) {
+    try {
+      const getData = await this.redisClient.hgetall(key);
+      if (Object.keys(getData).length > 0) {
+        return getData;
       } else {
         return null;
       }
@@ -57,10 +95,36 @@ class RedisManager {
       console.error(e);
     }
   }
-
-  async delUser(key){
+  async getHkeys(key) {
+    try {
+      const result = await this.redisClient.hkeys(key);
+      return result;
+    } catch(e) {
+      console.error(e);
+    }
+  }
+  async hExists(key, field) {
+    try {
+      const result = this.redisClient.hexists(key, field);
+      return result;
+    } catch(e) {
+      console.error(e);
+    }
+  }
+  async getHvals(key){
     try{
-        await this.redisClient.del(key);
+      const result = this.redisClient.hvals(key);
+      return result;
+    }
+    catch(e){
+      console.error(e);
+    }
+  }
+  //TODO: 해쉬 내부의 특정 값만 삭제할 수 있는 함수
+  // hdel(room, 2), hlen(room) -> 필드 개수 길이
+  async delHash(key, field){
+    try{
+        await this.redisClient.hdel(key, field);
     }
     catch(e){
         console.error(e)
