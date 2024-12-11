@@ -4,11 +4,14 @@ import { PACKET_TYPE } from '../../constants/header.js';
 import { createResponse } from '../../utils/response/createResponse.js';
 import { joinRoomNotification } from '../../utils/notification/joinRoom.notification.js';
 import { Packets } from '../../init/loadProtos.js';
+import RedisManager from '../../classes/manager/redis.manager.js';
+import { socketManager } from '../../classes/manager/SocketManager.js';
 
-export const joinRoomHandler = (socket, payload) => {
+export const joinRoomHandler = async (socket, payload) => {
+  const redis = RedisManager.getInstance();
   const { roomId } = payload.joinRoomRequest;
 
-  const joinUser = getUser(socket.jwt);
+  const joinUser = await getUser(socket.jwt);
   if (!joinUser) {
     const errorResponsePayload = {
       joinRoomResponse: {
@@ -22,8 +25,9 @@ export const joinRoomHandler = (socket, payload) => {
     return;
   }
 
-  const game = findGameById(roomId);
-  if (game.isFullRoom()) {
+  const room = await redis.getHash('room', roomId);
+
+  if (isFullRoom(room)) {
     const errorResponsePayload = {
       joinRoomResponse: {
         success: false,
@@ -36,7 +40,7 @@ export const joinRoomHandler = (socket, payload) => {
     return;
   }
 
-  if (game.isGamingRoom()) {
+  if (isGamingRoom(room)) {
     const errorResponsePayload = {
       joinRoomResponse: {
         success: false,
@@ -51,12 +55,23 @@ export const joinRoomHandler = (socket, payload) => {
 
   joinUser.roomId = roomId;
 
-  const room = joinGameSession(roomId, joinUser);
+  room.users.push(joinUser);
+  await redis.setHash('room', roomId, JSON.stringify(room));
 
   // 방 안의 모든 유저에게 해당 유저 join 알림
-  room.users.forEach((user) => {
+  
+  await room.users.forEach((user) => {
     const response = joinRoomNotification(joinUser);
-    user.socket.write(createResponse(PACKET_TYPE.JOIN_ROOM_NOTIFICATION, 0, response));
+    try {
+      const socket = socketManager.getSocket(user.socket.jwt);
+      if (socket && !socket.destroyed) {
+        socket.write(createResponse(PACKET_TYPE.JOIN_ROOM_NOTIFICATION, 0, response));
+      } else {
+        console.log('Socket not available or already closed.');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   });
 
   const responsePayload = {
@@ -120,4 +135,12 @@ export const joinRandomRoomHandler = (socket, payload) => {
   };
 
   socket.write(createResponse(PACKET_TYPE.JOIN_RANDOM_ROOM_RESPONSE, 0, responsePayload));
+};
+
+const isFullRoom = (room) => {
+  return parseInt(room.users.length) >= parseInt(room.maxUserNum) ? true : false;
+};
+
+const isGamingRoom = (room) => {
+  return room.state !== Packets.RoomStateType.WAIT;
 };
