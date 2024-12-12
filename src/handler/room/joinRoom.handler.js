@@ -1,5 +1,3 @@
-import { findGameById, getAllGameSessions, joinGameSession } from '../../sessions/game.session.js';
-import { getUser } from '../../sessions/user.session.js';
 import { PACKET_TYPE } from '../../constants/header.js';
 import { createResponse } from '../../utils/response/createResponse.js';
 import { joinRoomNotification } from '../../utils/notification/joinRoom.notification.js';
@@ -11,7 +9,7 @@ export const joinRoomHandler = async (socket, payload) => {
   const redis = RedisManager.getInstance();
   const { roomId } = payload.joinRoomRequest;
 
-  const joinUser = await getUser(socket.jwt);
+  const joinUser = await redis.getHash('user', socket.jwt);
   if (!joinUser) {
     const errorResponsePayload = {
       joinRoomResponse: {
@@ -54,12 +52,12 @@ export const joinRoomHandler = async (socket, payload) => {
   }
 
   joinUser.roomId = roomId;
-
+  await redis.setHash('user', joinUser.socket.jwt, JSON.stringify(joinUser));
   room.users.push(joinUser);
   await redis.setHash('room', roomId, JSON.stringify(room));
 
   // 방 안의 모든 유저에게 해당 유저 join 알림
-  
+
   await room.users.forEach((user) => {
     const response = joinRoomNotification(joinUser);
     try {
@@ -85,8 +83,9 @@ export const joinRoomHandler = async (socket, payload) => {
   socket.write(createResponse(PACKET_TYPE.JOIN_ROOM_RESPONSE, 0, responsePayload));
 };
 
-export const joinRandomRoomHandler = (socket, payload) => {
-  const joinUser = getUser(socket.jwt);
+export const joinRandomRoomHandler = async (socket, payload) => {
+  const redis = RedisManager.getInstance();
+  const joinUser = await redis.getHash('user', socket.jwt);
   if (!joinUser) {
     const errorResponsePayload = {
       joinRandomRoomResponse: {
@@ -100,9 +99,11 @@ export const joinRandomRoomHandler = (socket, payload) => {
     return;
   }
 
-  const rooms = getAllGameSessions();
+  const roomData = await redis.getHvals('room');
+  const rooms = roomData.map((data) => JSON.parse(data));
+
   //풀방 빼고 다시 랜덤
-  const filteredRoom = rooms.filter((room) => !room.isFullRoom());
+  const filteredRoom = rooms.filter((room) => !isFullRoom(room));
   if (filteredRoom.length === 0) {
     const errorResponsePayload = {
       joinRandomRoomResponse: {
@@ -116,14 +117,29 @@ export const joinRandomRoomHandler = (socket, payload) => {
     return;
   }
 
-  const roomId = Math.floor(Math.random() * filteredRoom.length) + 1;
+  const roomIndex = Math.floor(Math.random() * filteredRoom.length);
+
+  const room = filteredRoom[roomIndex];
+
+  const roomId = room.id;
 
   joinUser.roomId = roomId;
-  const room = joinGameSession(roomId, joinUser);
+  await redis.setHash('user', joinUser.socket.jwt, JSON.stringify(joinUser));
+  room.users.push(joinUser);
+  await redis.setHash('room', roomId, JSON.stringify(room));
   // 방 안의 모든 유저에게 해당 유저 join 알림
-  const notificationResponse = joinRoomNotification(joinUser);
-  room.users.forEach((user) => {
-    user.socket.write(createResponse(PACKET_TYPE.JOIN_ROOM_NOTIFICATION, 0, notificationResponse));
+  await room.users.forEach((user) => {
+    const response = joinRoomNotification(joinUser);
+    try {
+      const socket = socketManager.getSocket(user.socket.jwt);
+      if (socket && !socket.destroyed) {
+        socket.write(createResponse(PACKET_TYPE.JOIN_ROOM_NOTIFICATION, 0, response));
+      } else {
+        console.log('Socket not available or already closed.');
+      }
+    } catch (error) {
+      console.error(error);
+    }
   });
 
   const responsePayload = {

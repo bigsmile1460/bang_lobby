@@ -1,40 +1,65 @@
 import { PACKET_TYPE } from '../../constants/header.js';
-import { findGameById, removeGameSession } from '../../sessions/game.session.js';
 import leaveRoomNotification from '../../utils/notification/leaveRoom.nofitication.js';
 import { createResponse } from '../../utils/response/createResponse.js';
 import { Packets } from '../../init/loadProtos.js';
-import { roomManager } from '../../classes/manager/room.manager.js';
+import RedisManager from '../../classes/manager/redis.manager.js';
+import { socketManager } from '../../classes/manager/SocketManager.js';
 
 export const leaveRoomHandler = async (socket, payload) => {
   try {
-    const leaveUser = getUser(socket.jwt);
-    const currentGameId = leaveUser.roomId;
-    const currentGame = findGameById(leaveUser.roomId);
-
+    const redis = RedisManager.getInstance();
+    const leaveUser = await redis.getHash('user', socket.jwt);
+    const roomId = leaveUser.roomId;
+    const room = await redis.getHash('room', leaveUser.roomId);
     //방장이 나갔을 경우
-    if (leaveUser.id === currentGame.ownerId) {
+    if (leaveUser.id === room.ownerId) {
       const responsePayload = {
         leaveRoomResponse: {
           success: true,
           failCode: Packets.GlobalFailCode.NONE_FAILCODE,
         },
       };
-      currentGame.users.forEach((user) => {
-        user.roomId = null;
-        user.socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_RESPONSE, 0, responsePayload));
-      });
 
-      removeGameSession(currentGameId);
-      roomManager.deleteRoom(currentGameId);
+      await room.users.forEach((user) => {
+        try {
+          user.roomId = null;
+          redis.setHash('user', user.socket.jwt, JSON.stringify(user));
+          const socket = socketManager.getSocket(user.socket.jwt);
+          if (socket && !socket.destroyed) {
+            socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_RESPONSE, 0, responsePayload));
+          } else {
+            console.log('Socket not available or already closed.');
+          }
+        } catch (error) {
+          console.error(error);
+        }
+      });
+      await redis.delHash('room', roomId);
       return;
     }
-
+    // 방장 아닌 사람이 나갔을 때
     leaveUser.roomId = null;
-    currentGame.removeUser(leaveUser);
-    const users = currentGame.users;
+    await redis.setHash('user', leaveUser.socket.jwt, JSON.stringify(leaveUser));
+
+    const leaveIndex = room.users.findIndex((u) => u.id === leaveUser.id);
+    if (leaveIndex !== -1) {
+      room.users.splice(leaveIndex, 1);
+    }
+    await redis.setHash('room', roomId, JSON.stringify(room));
+
     const payload = leaveRoomNotification(leaveUser);
-    users.forEach((user) => {
-      user.socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_NOTIFICATION, 0, payload));
+
+    await room.users.forEach((user) => {
+      try {
+        const socket = socketManager.getSocket(user.socket.jwt);
+        if (socket && !socket.destroyed) {
+          socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_NOTIFICATION, 0, payload));
+        } else {
+          console.log('Socket not available or already closed.');
+        }
+      } catch (error) {
+        console.error(error);
+      }
     });
 
     const responsePayload = {
