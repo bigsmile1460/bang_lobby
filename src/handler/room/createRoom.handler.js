@@ -1,5 +1,4 @@
 import { PACKET_TYPE } from '../../constants/header.js';
-import { getUser } from '../../sessions/user.session.js';
 import CustomError from '../../utils/error/customError.js';
 import { createResponse } from '../../utils/response/createResponse.js';
 import { Packets } from '../../init/loadProtos.js';
@@ -7,13 +6,13 @@ import RedisManager from '../../classes/manager/redis.manager.js';
 import Game from '../../classes/model/game.class.js';
 
 export const createRoomHandler = async (socket, payload) => {
+  const redis = RedisManager.getInstance();
   const { name, maxUserNum } = payload.createRoomRequest;
-  const user = await getUser(socket.jwt);
+  const user = await redis.getHash('user', socket.jwt);
 
   if (!user) {
     throw new CustomError(`유저를 찾을 수 없음`);
   }
-  const redis = RedisManager.getInstance();
   const ownerId = user.id;
   try {
     // RoomManager를 사용하여 새로운 방 ID 생성
@@ -26,7 +25,7 @@ export const createRoomHandler = async (socket, payload) => {
     const newGame = new Game(roomId, ownerId, name, maxUserNum, user);
     await redis.setHash('room', roomId, JSON.stringify(newGame)); 
     user.roomId = roomId;
-    
+    await redis.setHash('user', user.socket.jwt, JSON.stringify(user));
     const payloadResponse = {
       createRoomResponse: {
         success: true,
