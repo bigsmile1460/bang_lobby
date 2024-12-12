@@ -30,7 +30,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 게임 존재 여부
     const roomData = await redis.getHash('room', ownerUser.roomId);
     let users = [];
-    roomData.users.forEach((user, i) => {
+    roomData.users.forEach((user) => {
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
@@ -51,7 +51,7 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     room.gameStart();
 
-    room.deck = setUpGame(room.users);
+    await setUpGame(room);
 
     
 
@@ -75,8 +75,16 @@ export const gamePrepareHandler = async (socket, payload) => {
         console.error(error);
       }
     });
-    await redis.setHash('room', room.id, room); // 방 정보 업데이트
+
+    console.log(room);
+
+    await redis.setHash('room', room.id, JSON.stringify(room)); // 방 정보 업데이트
     //TODO: pub -> 게임서버 인메모리로?
+    
+    await redis.publish('lobby', JSON.stringify(room));
+    //게임서버에서 받으면 set데이터를 올리고 get으로 True/false
+    // TCP ack 4byte seq 집어넣어서 확인한다.
+
     const preparePayload = {
       gamePrepareResponse: {
         success: true,
@@ -89,3 +97,5 @@ export const gamePrepareHandler = async (socket, payload) => {
     console.error(err);
   }
 };
+
+

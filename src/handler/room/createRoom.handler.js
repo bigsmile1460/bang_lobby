@@ -22,9 +22,9 @@ export const createRoomHandler = async (socket, payload) => {
       roomId += 1;
       roomExists = await redis.hExists('room',roomId);
     }
+    user.roomId = roomId;
     const newGame = new Game(roomId, ownerId, name, maxUserNum, user);
     await redis.setHash('room', roomId, JSON.stringify(newGame)); 
-    user.roomId = roomId;
     await redis.setHash('user', user.socket.jwt, JSON.stringify(user));
     const payloadResponse = {
       createRoomResponse: {

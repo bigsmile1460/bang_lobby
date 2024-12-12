@@ -54,6 +54,7 @@ export const joinRoomHandler = async (socket, payload) => {
   joinUser.roomId = roomId;
   await redis.setHash('user', joinUser.socket.jwt, JSON.stringify(joinUser));
   room.users.push(joinUser);
+  room.usersNum += 1;
   await redis.setHash('room', roomId, JSON.stringify(room));
 
   // 방 안의 모든 유저에게 해당 유저 join 알림

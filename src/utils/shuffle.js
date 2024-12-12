@@ -9,7 +9,7 @@ const shuffle = (array) => {
   return array;
 };
 
-export const setUpGame = async (users) => {
+export const setUpGame = async (room) => {
   const redis = RedisManager.getInstance();
 
   const roleTypes = await redis.get('roleTypes');
@@ -18,9 +18,9 @@ export const setUpGame = async (users) => {
 
   
   // roleType 배분
-  const roleTypeClone = roleTypes[users.length];
+  const roleTypeClone = roleTypes[room.users.length];
   const shuffledRoleType = shuffle(roleTypeClone);
-  users.forEach((user, i) => {
+  room.users.forEach((user, i) => {
     user.setCharacterRoleType(shuffledRoleType[i]);
     if (user.characterData.roleType === Packets.RoleType.TARGET) {
       user.increaseHp();
@@ -28,18 +28,17 @@ export const setUpGame = async (users) => {
   });
 
   // 캐릭터 배분
-  const shuffledCharacter = shuffle(characterList).splice(0, users.length);
-  users.forEach((user, i) => {
+  const shuffledCharacter = shuffle(characterList).splice(0, room.users.length);
+  room.users.forEach((user, i) => {
     user.setCharacter(shuffledCharacter[i].type);
   });
 
   const deck = shuffle(cardDeck);
 
   // 카드 배분
-  users.forEach((user) => {
+  room.users.forEach((user) => {
     const gainCards = deck.splice(0, user.characterData.hp);
     gainCards.forEach((card) => user.addHandCard(card));
   });
-
-  return deck; // currentGame.deck 에 리턴된 덱 넣기?
+  room.deck = deck;
 };
