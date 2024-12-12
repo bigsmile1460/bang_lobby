@@ -117,7 +117,6 @@ class RedisManager {
   async get(key) {
     try {
       const value = await this.redisClient.get(key);
-      console.log(`Key "${key}"의 값:`, value);
       return JSON.parse(value);
     } catch (e) {
       console.error(e);
