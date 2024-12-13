@@ -16,11 +16,13 @@ import {
   REDIS_HOST,
   REDIS_NAME,
   REDIS_PASSWORD,
-  REDIS_PORT
+  REDIS_PORT,
 } from '../constants/env.js';
 import {
   PAYLOAD_LENGTH_SIZE,
   PAYLOAD_ONEOF_CASE_SIZE,
+  ROOM_ID_SIZE,
+  ROOMSTATE_SIZE,
   SEQUENCE_SIZE,
   VERSION_LENGTH_SIZE,
 } from '../constants/header.js';
@@ -34,6 +36,8 @@ export const config = {
     version: CLIENT_VERSION,
   },
   header: {
+    ROOMSTATE_SIZE,
+    ROOM_ID_SIZE,
     PAYLOAD_ONEOF_CASE_SIZE,
     VERSION_LENGTH_SIZE,
     SEQUENCE_SIZE,
@@ -63,5 +67,5 @@ export const config = {
     port: REDIS_PORT,
     name: REDIS_NAME,
     password: REDIS_PASSWORD,
-  }
+  },
 };
