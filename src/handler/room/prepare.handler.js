@@ -37,7 +37,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     });
     const room = plainToInstance(Game, roomData);
     room.users = users;
-    // const inGameUsers = room.users;
+
     if (!room) {
       const errorResponse = {
         gamePrepareResponse: {
@@ -52,8 +52,6 @@ export const gamePrepareHandler = async (socket, payload) => {
     room.gameStart();
 
     await setUpGame(room);
-
-    
 
     // Notification에서 보내면 안되는 것: 본인이 아닌 handCards, target을 제외한 roleType
     // 카드 배분은 정상적으로 하고, 보내지만 않기
@@ -76,11 +74,10 @@ export const gamePrepareHandler = async (socket, payload) => {
       }
     });
 
-    console.log(room);
 
     await redis.setHash('room', room.id, JSON.stringify(room)); // 방 정보 업데이트
     //TODO: pub -> 게임서버 인메모리로?
-    
+
     await redis.publish('lobby', JSON.stringify(room));
     //게임서버에서 받으면 set데이터를 올리고 get으로 True/false
     // TCP ack 4byte seq 집어넣어서 확인한다.
@@ -93,9 +90,16 @@ export const gamePrepareHandler = async (socket, payload) => {
     };
 
     socket.write(createResponse(PACKET_TYPE.GAME_PREPARE_RESPONSE, 0, preparePayload));
+
+    //prepare를 다 보내고 나면 socketManager, socket에서 삭제
+
+    setTimeout(() => {
+      room.users.forEach((user) => {
+        socketManager.removeSocket(user.socket.jwt);
+      });
+    }, 200);
   } catch (err) {
     console.error(err);
   }
 };
-
 
