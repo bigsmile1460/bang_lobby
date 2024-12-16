@@ -20,12 +20,13 @@ export const leaveRoomHandler = async (socket, payload) => {
         },
       };
 
-      await room.users.forEach((user) => {
+      room.users.forEach(async (user) => {
         try {
           user.roomId = null;
-          redis.setHash('user', user.socket.jwt, JSON.stringify(user));
+          await redis.setHash('user', user.socket.jwt, JSON.stringify(user));
           const socket = socketManager.getSocket(user.socket.jwt);
           if (socket && !socket.destroyed) {
+            console.log(`${user.nickname}에게 노티 전달`)
             socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_RESPONSE, 0, responsePayload));
           } else {
             console.log('Socket not available or already closed.');
@@ -49,13 +50,13 @@ export const leaveRoomHandler = async (socket, payload) => {
 
     const payload = leaveRoomNotification(leaveUser);
 
-    await room.users.forEach((user) => {
+    room.users.forEach((user) => {
       try {
         const socket = socketManager.getSocket(user.socket.jwt);
         if (socket && !socket.destroyed) {
           socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_NOTIFICATION, 0, payload));
         } else {
-          console.log('Socket not available or already closed.');
+          console.log('Socket not available or already closed.22');
         }
       } catch (error) {
         console.error(error);
