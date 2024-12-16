@@ -2,6 +2,12 @@ import { config } from '../../config/config.js';
 import { Packets } from '../../init/loadProtos.js';
 
 const createHeader = (payloadOneofCase, sequence, payloadLength) => {
+  const roomState = Buffer.alloc(config.header.ROOMSTATE_SIZE);
+  roomState.writeUInt16BE(0, 0);
+
+  const roomId = Buffer.alloc(config.header.ROOM_ID_SIZE);
+  roomId.writeInt32BE(0, 0);
+
   const payloadOneofCaseBuffer = Buffer.alloc(config.header.PAYLOAD_ONEOF_CASE_SIZE);
   payloadOneofCaseBuffer.writeUInt16BE(payloadOneofCase, 0);
 
@@ -17,6 +23,8 @@ const createHeader = (payloadOneofCase, sequence, payloadLength) => {
   payloadLengthBuffer.writeUInt32BE(payloadLength, 0);
 
   return Buffer.concat([
+    roomState,
+    roomId,
     payloadOneofCaseBuffer,
     versionLengthBuffer,
     versionBuffer,
