@@ -10,11 +10,12 @@ import { socketManager } from '../../classes/manager/SocketManager.js';
 import RedisManager from '../../classes/manager/redis.manager.js';
 
 export const loginHandler = async (socket, payload) => {
-  const redis = RedisManager.getInstance()
+  const redis = RedisManager.getInstance();
   const { email, password } = payload.loginRequest;
-  console.log(payload.loginRequest)
-  socket.jwt = jwt.sign({ id:email, password }, config.jwt.SCRET_KEY, { expiresIn: '24h' });
-  console.log("socket:",socket.jwt);
+  console.log(payload.loginRequest);
+
+  socket.jwt = jwt.sign({ id: email }, config.jwt.SCRET_KEY, { noTimestamp: true });
+
   try {
     const user = await findUserByEmail(email);
     if (!user) {
@@ -71,26 +72,27 @@ export const loginHandler = async (socket, payload) => {
       return;
     }
 
-    
     // 세션에 유저 추가
     const id = user.id;
     const nickname = user.nickname;
     const newUser = new User(id, nickname, socket);
-
-    
     await redis.setHash('user', socket.jwt, JSON.stringify(newUser));
-    
-    const clientInfo = {
-      address: socket.remoteAddress,
-      port: socket.remotePort,
-      jwt: socket.jwt, // 고유 식별자
-    };
-    await redis.setHash('clientInfo', clientInfo.jwt, JSON.stringify(clientInfo));
 
+
+    // const userCheck = await redis.getHash('clientInfo', socket.jwt);
+    // if (userCheck && socket.remoteAddress !== userCheck.address) {
+      const clientInfo = {
+        address: socket.remoteAddress,
+        port: socket.remotePort,
+        jwt: socket.jwt, // 고유 식별자
+      };
+      await redis.setHash('clientInfo', clientInfo.jwt, JSON.stringify(clientInfo));  
+    // }
+    
     socketManager.addSocket(socket.jwt, socket);
 
     //JWT가 레디스 키가 되고 유저의 정보들이 벨류로 들어가고.
-    //JWT를 통해서 유저의 정보를 다시 불러올 수 있게 
+    //JWT를 통해서 유저의 정보를 다시 불러올 수 있게
     const responsePayload = {
       loginResponse: {
         success: true,
