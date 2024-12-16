@@ -1,4 +1,4 @@
-export const ROOMSTATE_SIZE = 1;
+export const ROOMSTATE_SIZE = 2;
 export const ROOM_ID_SIZE = 4;
 export const PAYLOAD_ONEOF_CASE_SIZE = 2;
 export const VERSION_LENGTH_SIZE = 1;
