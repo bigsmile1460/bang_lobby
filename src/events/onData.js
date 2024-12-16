@@ -23,11 +23,12 @@ export const onData = (socket) => async (data) => {
     PAYLOAD_LENGTH_SIZE;
 
   while (socket.buffer.length >= headerSize) {
-    const roomState = socket.buffer.readUInt8(0);
+    // 2 byte로 읽어야함
+    const roomState = socket.buffer.readUInt16BE(0);
     console.log(`RoomState: ${roomState}`);
 
     const roomIdOffset = ROOMSTATE_SIZE;
-    // WARN: 사이즈 32B 아님
+    // 4 bytes
     const roomId = socket.buffer.readUInt32BE(roomIdOffset);
     console.log(`RoomId: ${roomId}`);
 
@@ -75,6 +76,7 @@ export const onData = (socket) => async (data) => {
 
     try {
       const decodedPacket = Packets.GamePacket.decode(payload);
+      console.log(`decoded payload: ${decodedPacket}`);
       const handler = getHandlerByPacketType(payloadOneofCase);
       if (handler) {
         const t0 = performance.now();
