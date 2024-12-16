@@ -1,48 +1,51 @@
+import RedisManager from '../classes/manager/redis.manager.js';
 import { leaveRoomHandler } from '../handler/room/leaveRoom.handler.js';
 import { Packets } from '../init/loadProtos.js';
-import { findGameById } from '../sessions/game.session.js';
-import { getUser, removeUser } from '../sessions/user.session.js';
 
-export const onEnd = (socket) => () => {
+export const onEnd = (socket) => async () => {
+  const redis = RedisManager.getInstance();
   try {
     console.log(`Client disconnected from ${socket.remoteAddress}:${socket.remotePort}`);
-    const user = getUser(socket.jwt);
-
-    if (!user){
+    const user = await redis.getHash('user', socket.jwt);
+    
+    if (!user) {
       return;
     }
 
     if (!user.roomId) {
-      removeUser(socket.jwt);
+      await redis.delHash('user', socket.jwt);
       return;
     }
 
-    const currentGame = findGameById(user.roomId);
-    if (!currentGame) {
-      removeUser(socket.jwt);
+    const room = await redis.getHash('room', user.roomId);
+    if (!room) {
+      await redis.delHash('user', socket.jwt);
       return;
     }
 
-    if (currentGame.state === Packets.RoomStateType.WAIT) {
+    if (room.state === Packets.RoomStateType.WAIT) {
       //게임 시작 전
-      leaveRoomHandler(socket);
+      await leaveRoomHandler(socket, null);
     }
-    if (currentGame.state === Packets.RoomStateType.PREPARE) {
-      //게임 세팅 중
-      setTimeout(() => {
-        user.setHp(0);
-        removeUser(socket.jwt);
-      }, 5000);
-      return;
+    if (room.state === Packets.RoomStateType.PREPARE) {
+      // 게임 세팅 중
+      // 방 안에서 유저의 hp를 0으로 변경
+      const userIndex = room.users.findIndex((leaveUser) => leaveUser.id === user.id)
+      user.characterData.hp = 0;
+      //재접속 구현 전까지는 게임을 종료
+      room.users[userIndex] = user;
+      
+      await redis.setHash('room', room.id, room);
     }
-    if (currentGame.state === Packets.RoomStateType.INAGAME) {
-      //인 게임
-      user.setHp(0);
-    }
-
-    removeUser(socket.jwt);
+    // if (currentGame.state === Packets.RoomStateType.INAGAME) {
+    //   //인 게임
+    //   user.setHp(0);
+    // }
+    await redis.delHash('user', socket.jwt);
+    
   } catch (e) {
-    removeUser(socket.jwt);
+    await redis.delHash('user', socket.jwt);
+
     console.error(e);
   }
 };
