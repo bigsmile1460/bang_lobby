@@ -1,6 +1,6 @@
 import { plainToInstance } from 'class-transformer';
 import RedisManager from '../../classes/manager/redis.manager.js';
-import { socketManager } from '../../classes/manager/SocketManager.js';
+import { socketManager } from '../../classes/manager/socketManager.js';
 import Game from '../../classes/model/game.class.js';
 import { PACKET_TYPE } from '../../constants/header.js';
 import { Packets } from '../../init/loadProtos.js';

@@ -6,7 +6,7 @@ import { config } from '../../config/config.js';
 import bcrypt from 'bcrypt';
 import User from '../../classes/model/user.class.js';
 import jwt from 'jsonwebtoken';
-import { socketManager } from '../../classes/manager/SocketManager.js';
+import { socketManager } from '../../classes/manager/socketManager.js';
 import RedisManager from '../../classes/manager/redis.manager.js';
 
 export const loginHandler = async (socket, payload) => {
