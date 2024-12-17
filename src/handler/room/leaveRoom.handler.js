@@ -3,7 +3,7 @@ import leaveRoomNotification from '../../utils/notification/leaveRoom.nofiticati
 import { createResponse } from '../../utils/response/createResponse.js';
 import { Packets } from '../../init/loadProtos.js';
 import RedisManager from '../../classes/manager/redis.manager.js';
-import { socketManager } from '../../classes/manager/SocketManager.js';
+import { socketManager } from '../../classes/manager/socketManager.js';
 
 export const leaveRoomHandler = async (socket, payload) => {
   try {
