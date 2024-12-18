@@ -8,13 +8,14 @@ import { saveRecord } from '../../db/record/record.db.js';
 export const gameEndNotification = async (room) => {
   try {
     const survivor = [];
-    room.users.forEach((user) => {
+
+    for (let i = 0; i < room.users.length; i++) {
+      const user = room.users[i];
       if (user.characterData.hp > 0) {
         // 생존자 확인
         survivor.push({ id: user.id, role: user.characterData.roleType });
       }
-    });
-
+    }
     const isTarget = survivor.find((user) => user.role === Packets.RoleType.TARGET);
     const isBodyguard = survivor.find((user) => user.role === Packets.RoleType.BODYGUARD);
     const isHitman = survivor.find((user) => user.role === Packets.RoleType.HITMAN);
@@ -66,19 +67,21 @@ export const gameEndNotification = async (room) => {
     if (responsePayload) {
       // 기록 저장
       const losers = room.users.filter((user) => !winners.some((winner) => winner.id === user.id));
-      winners.forEach(async (winner) => {
-        await saveRecord(winner.id, true, winner.characterData.roleType);
-      });
-
-      losers.forEach(async (loser) => {
-        await saveRecord(loser.id, false, loser.characterData.roleType);
-      });
+      for (let i = 0; i < winners.length; i++) {
+        const winner = winners[i];
+        saveRecord(winner.id, true, winner.characterData.roleType);
+      }
+      for (let i = 0; i < losers.length; i++) {
+        const loser = winners[i];
+        saveRecord(loser.id, false, loser.characterData.roleType);
+      }
 
       roomManager.deleteRoom(room.id);
-      room.users.forEach((user) => {
-        user.releaseUser()
+      for (let i = 0; i < room.users.length; i++) {
+        const user = room.users[i];
+        user.releaseUser();
         user.socket.write(createResponse(PACKET_TYPE.GAME_END_NOTIFICATION, 0, responsePayload));
-      });
+      }
 
       removeGameSession(room.id);
     }

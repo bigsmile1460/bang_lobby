@@ -59,7 +59,8 @@ export const joinRoomHandler = async (socket, payload) => {
 
   // 방 안의 모든 유저에게 해당 유저 join 알림
 
-  await room.users.forEach((user) => {
+  for(let i=0; i< room.users.length; i++){
+    const user = room.users[i];
     const response = joinRoomNotification(joinUser);
     try {
       const socket = socketManager.getSocket(user.socket.jwt);
@@ -71,7 +72,7 @@ export const joinRoomHandler = async (socket, payload) => {
     } catch (error) {
       console.error(error);
     }
-  });
+  }
 
   const responsePayload = {
     joinRoomResponse: {
@@ -129,7 +130,8 @@ export const joinRandomRoomHandler = async (socket, payload) => {
   room.users.push(joinUser);
   await redis.setHash('room', roomId, JSON.stringify(room));
   // 방 안의 모든 유저에게 해당 유저 join 알림
-  await room.users.forEach((user) => {
+  for(let i=0; i< room.users.length; i++){
+    const user = room.users[i];
     const response = joinRoomNotification(joinUser);
     try {
       const socket = socketManager.getSocket(user.socket.jwt);
@@ -141,7 +143,8 @@ export const joinRandomRoomHandler = async (socket, payload) => {
     } catch (error) {
       console.error(error);
     }
-  });
+  }
+
 
   const responsePayload = {
     joinRandomRoomResponse: {

@@ -30,11 +30,12 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 게임 존재 여부
     const roomData = await redis.getHash('room', ownerUser.roomId);
     let users = [];
-    roomData.users.forEach((user) => {
+    for (let i=0; i< roomData.users.length; i++){
+      const user = roomData.users[i];
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
-    });
+    }
     const room = plainToInstance(Game, roomData);
     room.users = users;
 
@@ -57,14 +58,16 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 카드 배분은 정상적으로 하고, 보내지만 않기
     // 방 유저에게 알림
 
-    room.users.forEach((user) => {
+    for (let i = 0; i < room.users.length; i++) {
+      const user = room.users[i];
       try {
         user.maxHp = user.characterData.hp;
         const notificationPayload = gamePrepareNotification(room, user);
         const socket = socketManager.getSocket(user.socket.jwt);
+    
         if (socket && !socket.destroyed) {
           socket.write(
-            createResponse(PACKET_TYPE.GAME_PREPARE_NOTIFICATION, 0, notificationPayload),
+            createResponse(PACKET_TYPE.GAME_PREPARE_NOTIFICATION, 0, notificationPayload)
           );
         } else {
           console.log('Socket not available or already closed.');
@@ -72,7 +75,7 @@ export const gamePrepareHandler = async (socket, payload) => {
       } catch (error) {
         console.error(error);
       }
-    });
+    }
 
 
     await redis.setHash('room', room.id, JSON.stringify(room)); // 방 정보 업데이트
@@ -93,11 +96,9 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     //prepare를 다 보내고 나면 socketManager, socket에서 삭제
 
-    setTimeout(() => {
-      room.users.forEach((user) => {
-        socketManager.removeSocket(user.socket.jwt);
-      });
-    }, 200);
+    for (let i=0; i< room.users.length; i++){
+      socketManager.removeSocket(room.users[i].socket.jwt);
+    }
   } catch (err) {
     console.error(err);
   }

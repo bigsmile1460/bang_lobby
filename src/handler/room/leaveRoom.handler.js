@@ -19,14 +19,14 @@ export const leaveRoomHandler = async (socket, payload) => {
           failCode: Packets.GlobalFailCode.NONE_FAILCODE,
         },
       };
-
-      room.users.forEach(async (user) => {
+      for (let i = 0; i < room.users.length; i++) {
+        const user = room.users[i];
         try {
           user.roomId = null;
           await redis.setHash('user', user.socket.jwt, JSON.stringify(user));
           const socket = socketManager.getSocket(user.socket.jwt);
           if (socket && !socket.destroyed) {
-            console.log(`${user.nickname}에게 노티 전달`)
+            console.log(`${user.nickname}에게 노티 전달`);
             socket.write(createResponse(PACKET_TYPE.LEAVE_ROOM_RESPONSE, 0, responsePayload));
           } else {
             console.log('Socket not available or already closed.');
@@ -34,7 +34,8 @@ export const leaveRoomHandler = async (socket, payload) => {
         } catch (error) {
           console.error(error);
         }
-      });
+      }
+
       await redis.delHash('room', roomId);
       return;
     }
@@ -50,7 +51,8 @@ export const leaveRoomHandler = async (socket, payload) => {
 
     const payload = leaveRoomNotification(leaveUser);
 
-    room.users.forEach((user) => {
+    for (let i = 0; i < room.users.length; i++) {
+      const user = room.users[i];
       try {
         const socket = socketManager.getSocket(user.socket.jwt);
         if (socket && !socket.destroyed) {
@@ -61,7 +63,7 @@ export const leaveRoomHandler = async (socket, payload) => {
       } catch (error) {
         console.error(error);
       }
-    });
+    }
 
     const responsePayload = {
       leaveRoomResponse: {
