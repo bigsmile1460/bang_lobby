@@ -14,7 +14,7 @@ export const loginHandler = async (socket, payload) => {
   const { email, password } = payload.loginRequest;
   console.log(payload.loginRequest);
 
-  socket.jwt = jwt.sign({ id: `${socket.remoteAddress}:${socket.remotePort}` }, config.jwt.SCRET_KEY, { noTimestamp: true });
+  socket.jwt = jwt.sign({ id: email }, config.jwt.SCRET_KEY, { noTimestamp: true });
 
   try {
     const user = await findUserByEmail(email);
