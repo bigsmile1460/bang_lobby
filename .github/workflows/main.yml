@@ -21,8 +21,8 @@ jobs:
 
       - name: Build and Push Docker Image
         run: |
-          docker build -t doughnutdough5/bangbangbang:latest .
-          docker push doughnutdough5/bangbangbang:latest
+          docker build -t doughnutdough5/bangbangbang-lobby:latest .
+          docker push doughnutdough5/bangbangbang-lobby:latest
 
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
@@ -41,7 +41,7 @@ jobs:
               sudo docker rm ${{ secrets.CONTAINER_NAME }}
             fi
 
-            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/bangbangbang
-            sudo docker run -d --env-file ${{ secrets.ENV_PATH }} --name ${{ secrets.CONTAINER_NAME }} -p ${{ secrets.IN_PORT }}:${{ secrets.OUT_PORT }} ${{ secrets.DOCKER_USERNAME }}/bangbangbang
+            sudo docker pull ${{ secrets.DOCKER_USERNAME }}/bangbangbang-lobby
+            sudo docker run -d --env-file ${{ secrets.ENV_PATH }} --name ${{ secrets.CONTAINER_NAME }} -p ${{ secrets.IN_PORT }}:${{ secrets.OUT_PORT }} ${{ secrets.DOCKER_USERNAME }}/bangbangbang-lobby
             sudo docker image prune -f
             sudo docker container prune -f

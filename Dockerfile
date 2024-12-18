@@ -14,16 +14,16 @@ RUN curl -sL https://deb.nodesource.com/setup_20.x | bash && \
     apt-get install -y nodejs
 
 # 작업 디렉토리 설정
-WORKDIR /bangbangbang
+WORKDIR /bangbangbang-lobby
 
 # package.json과 package-lock.json 파일을 컨테이너에 복사
-COPY package*.json /bangbangbang/
+COPY package*.json /bangbangbang-lobby/
 
 # 의존성 설치
 RUN npm install
 
 # 애플리케이션 소스 파일 복사
-COPY . /bangbangbang/
+COPY . /bangbangbang-lobby/
 
 # 애플리케이션 포트 노출
 EXPOSE 5555
