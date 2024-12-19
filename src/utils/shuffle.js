@@ -11,25 +11,10 @@ const shuffle = (array) => {
 export const setUpGame = async (roleTypes, cardDeck, characterList, room) => {
   // roleType 배분
   const roleTypeClone = roleTypes[room.users.length];
-  const shuffledRoleType = await shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
-
-  for (let i = 0; i < room.users.length; i++) {
-    const user = room.users[i];
-    user.setCharacterRoleType(shuffledRoleType[i]);
-    if (user.characterData.roleType === Packets.RoleType.TARGET) {
-      user.increaseHp();
-    }
-  }
-
-  // 캐릭터 배분
-  const shuffledCharacter = await shuffle(characterList).splice(0, room.users.length);
-  for (let i = 0; i < room.users.length; i++) {
-    const user = room.users[i];
-    user.setCharacter(shuffledCharacter[i].type);
-  }
+  const shuffledRoleType = shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
 
   // 카드 덱 셔플
-  const deck = await shuffle(cardDeck);
+  const deck = shuffle(cardDeck);
 
   // 카드 배분
   for (const user of room.users) {
@@ -41,4 +26,19 @@ export const setUpGame = async (roleTypes, cardDeck, characterList, room) => {
 
   // 덱 업데이트
   room.deck = deck;
+
+  for (let i = 0; i < room.users.length; i++) {
+    const user = room.users[i];
+    user.setCharacterRoleType(shuffledRoleType[i]);
+    if (user.characterData.roleType === Packets.RoleType.TARGET) {
+      user.increaseHp();
+    }
+  }
+
+  // 캐릭터 배분
+  const shuffledCharacter = shuffle(characterList).splice(0, room.users.length);
+  for (let i = 0; i < room.users.length; i++) {
+    const user = room.users[i];
+    user.setCharacter(shuffledCharacter[i].type);
+  }
 };
