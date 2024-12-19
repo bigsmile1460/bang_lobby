@@ -31,7 +31,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     const roomData = await redis.getHash('room', ownerUser.roomId);
     let users = [];
     const room = plainToInstance(Game, roomData);
-    for (const user of room.users){
+    for (const user of room.users) {
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
@@ -51,7 +51,11 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     room.gameStart();
 
-    await setUpGame(room);
+    const roleTypes = await redis.get('roleTypes');
+    const cardDeck = await redis.get('cardDeck');
+    const characterList = await redis.get('characterList');
+
+    await setUpGame(roleTypes, cardDeck, characterList, room);
 
     // Notification에서 보내면 안되는 것: 본인이 아닌 handCards, target을 제외한 roleType
     // 카드 배분은 정상적으로 하고, 보내지만 않기
@@ -62,10 +66,10 @@ export const gamePrepareHandler = async (socket, payload) => {
         user.maxHp = user.characterData.hp;
         const notificationPayload = gamePrepareNotification(room, user);
         const socket = socketManager.getSocket(user.socket.jwt);
-    
+
         if (socket && !socket.destroyed) {
           socket.write(
-            createResponse(PACKET_TYPE.GAME_PREPARE_NOTIFICATION, 0, notificationPayload)
+            createResponse(PACKET_TYPE.GAME_PREPARE_NOTIFICATION, 0, notificationPayload),
           );
         } else {
           console.log('Socket not available or already closed.');
@@ -74,7 +78,6 @@ export const gamePrepareHandler = async (socket, payload) => {
         console.error(error);
       }
     }
-
 
     await redis.setHash('room', room.id, JSON.stringify(room)); // 방 정보 업데이트
     //TODO: pub -> 게임서버 인메모리로?
@@ -94,11 +97,10 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     //prepare를 다 보내고 나면 socketManager, socket에서 삭제
 
-    for (const user of room.users){
+    for (const user of room.users) {
       socketManager.removeSocket(user.socket.jwt);
     }
   } catch (err) {
     console.error(err);
   }
 };
-

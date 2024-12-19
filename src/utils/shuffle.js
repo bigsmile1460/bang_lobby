@@ -1,4 +1,3 @@
-import RedisManager from '../classes/manager/redis.manager.js';
 import { Packets } from '../init/loadProtos.js';
 
 const shuffle = (array) => {
@@ -9,19 +8,13 @@ const shuffle = (array) => {
   return array;
 };
 
-export const setUpGame = async (room) => {
-  const redis = RedisManager.getInstance();
-
-  // roleTypes, cardDeck, characterList를 동기적으로 가져오기
-  const roleTypes = await redis.get('roleTypes');
-  const cardDeck = await redis.get('cardDeck');
-  const characterList = await redis.get('characterList');
-
+export const setUpGame = (roleTypes, cardDeck, characterList, room) => {
   // roleType 배분
   const roleTypeClone = roleTypes[room.users.length];
   const shuffledRoleType = shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
-  
-  for (const user of room.users) {
+
+  for (let i = 0; i < room.users.length; i++) {
+    const user = room.users[i];
     user.setCharacterRoleType(shuffledRoleType[i]);
     if (user.characterData.roleType === Packets.RoleType.TARGET) {
       user.increaseHp();
@@ -30,7 +23,8 @@ export const setUpGame = async (room) => {
 
   // 캐릭터 배분
   const shuffledCharacter = shuffle(characterList).splice(0, room.users.length);
-  for (const user of room.users) {
+  for (let i = 0; i < room.users.length; i++) {
+    const user = room.users[i];
     user.setCharacter(shuffledCharacter[i].type);
   }
 
