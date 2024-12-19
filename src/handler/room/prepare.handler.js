@@ -30,12 +30,12 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 게임 존재 여부
     const roomData = await redis.getHash('room', ownerUser.roomId);
     let users = [];
+    const room = plainToInstance(Game, roomData);
     for (const user of room.users){
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
     }
-    const room = plainToInstance(Game, roomData);
     room.users = users;
 
     if (!room) {
