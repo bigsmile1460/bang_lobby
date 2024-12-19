@@ -30,8 +30,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 게임 존재 여부
     const roomData = await redis.getHash('room', ownerUser.roomId);
     let users = [];
-    for (let i=0; i< roomData.users.length; i++){
-      const user = roomData.users[i];
+    for (const user of room.users){
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
@@ -58,8 +57,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     // 카드 배분은 정상적으로 하고, 보내지만 않기
     // 방 유저에게 알림
 
-    for (let i = 0; i < room.users.length; i++) {
-      const user = room.users[i];
+    for (const user of room.users) {
       try {
         user.maxHp = user.characterData.hp;
         const notificationPayload = gamePrepareNotification(room, user);
@@ -96,8 +94,8 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     //prepare를 다 보내고 나면 socketManager, socket에서 삭제
 
-    for (let i=0; i< room.users.length; i++){
-      socketManager.removeSocket(room.users[i].socket.jwt);
+    for (const user of room.users){
+      socketManager.removeSocket(user.socket.jwt);
     }
   } catch (err) {
     console.error(err);
