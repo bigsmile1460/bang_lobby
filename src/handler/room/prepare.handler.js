@@ -54,7 +54,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     }
 
     room.gameStart();
-    setUpGame(roleTypes, cardDeck, characterList, room);
+    await setUpGame(roleTypes, cardDeck, characterList, room);
 
     // Notification에서 보내면 안되는 것: 본인이 아닌 handCards, target을 제외한 roleType
     // 카드 배분은 정상적으로 하고, 보내지만 않기
