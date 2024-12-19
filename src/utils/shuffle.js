@@ -11,7 +11,7 @@ const shuffle = (array) => {
 export const setUpGame = async (roleTypes, cardDeck, characterList, room) => {
   // roleType 배분
   const roleTypeClone = roleTypes[room.users.length];
-  const shuffledRoleType = shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
+  const shuffledRoleType = await shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
 
   for (let i = 0; i < room.users.length; i++) {
     const user = room.users[i];
@@ -22,14 +22,14 @@ export const setUpGame = async (roleTypes, cardDeck, characterList, room) => {
   }
 
   // 캐릭터 배분
-  const shuffledCharacter = shuffle(characterList).splice(0, room.users.length);
+  const shuffledCharacter = await shuffle(characterList).splice(0, room.users.length);
   for (let i = 0; i < room.users.length; i++) {
     const user = room.users[i];
     user.setCharacter(shuffledCharacter[i].type);
   }
 
   // 카드 덱 셔플
-  const deck = shuffle(cardDeck);
+  const deck = await shuffle(cardDeck);
 
   // 카드 배분
   for (const user of room.users) {
