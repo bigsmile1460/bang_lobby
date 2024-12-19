@@ -25,16 +25,13 @@ export const onData = (socket) => async (data) => {
   while (socket.buffer.length >= headerSize) {
     // 2 byte로 읽어야함
     const roomState = socket.buffer.readUInt16BE(0);
-    console.log(`RoomState: ${roomState}`);
-
     const roomIdOffset = ROOMSTATE_SIZE;
     // 4 bytes
     const roomId = socket.buffer.readUInt32BE(roomIdOffset);
-    console.log(`RoomId: ${roomId}`);
 
     const payloadOneofCaseOffset = roomIdOffset + ROOM_ID_SIZE;
     const payloadOneofCase = socket.buffer.readUInt16BE(payloadOneofCaseOffset);
-    console.log(`packetType: ${getPacketTypeName(payloadOneofCase)}`);
+    // console.log(`packetType: ${getPacketTypeName(payloadOneofCase)}`);
 
     const versionLengthOffset = payloadOneofCaseOffset + PAYLOAD_ONEOF_CASE_SIZE;
     const versionLength = socket.buffer.readUInt8(versionLengthOffset);
@@ -48,13 +45,13 @@ export const onData = (socket) => async (data) => {
 
     const versionOffset = versionLengthOffset + VERSION_LENGTH_SIZE;
     const version = socket.buffer.toString('utf-8', versionOffset, versionOffset + versionLength);
-    console.log(`version: ${version}`);
+    // console.log(`version: ${version}`);
 
     // TODO: 클라이언트 version 검증
 
     const sequenceOffset = versionOffset + versionLength;
     const sequence = socket.buffer.readUInt32BE(sequenceOffset);
-    console.log(`sequence: ${sequence}`);
+    // console.log(`sequence: ${sequence}`);
 
     const payloadLengthOffset = sequenceOffset + SEQUENCE_SIZE;
     const payloadLength = socket.buffer.readUInt32BE(payloadLengthOffset);
@@ -72,21 +69,20 @@ export const onData = (socket) => async (data) => {
     const payload = socket.buffer.slice(totalHeaderLength, packetLength);
     // 남은 데이터(payloadLength를 초과)가 있다면 다시 버퍼에 넣어줌
     socket.buffer = socket.buffer.slice(packetLength);
-    console.log(`payload: ${payload}`);
 
     try {
       const decodedPacket = Packets.GamePacket.decode(payload);
-      console.log(`decoded payload: ${decodedPacket}`);
+      // console.log(`decoded payload: ${decodedPacket}`);
       const handler = getHandlerByPacketType(payloadOneofCase);
       if (handler) {
-        const t0 = performance.now();
+        // const t0 = performance.now();
         await handler(socket, decodedPacket);
-        const t1 = performance.now();
-        if (payloadOneofCase !== PACKET_TYPE.POSITION_UPDATE_REQUEST) {
-          console.log(
-            `Handle ${getPacketTypeName(payloadOneofCase)} took ${t1 - t0} milliseconds.`,
-          );
-        }
+        // const t1 = performance.now();
+        // if (payloadOneofCase !== PACKET_TYPE.POSITION_UPDATE_REQUEST) {
+        //   console.log(
+        //     `Handle ${getPacketTypeName(payloadOneofCase)} took ${t1 - t0} milliseconds.`,
+        //   );
+        // }
       }
     } catch (err) {
       console.error(err);
