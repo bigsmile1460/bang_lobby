@@ -8,7 +8,7 @@ const shuffle = (array) => {
   return array;
 };
 
-export const setUpGame = (roleTypes, cardDeck, characterList, room) => {
+export const setUpGame = async (roleTypes, cardDeck, characterList, room) => {
   // roleType 배분
   const roleTypeClone = roleTypes[room.users.length];
   const shuffledRoleType = shuffle(roleTypeClone); // shuffle이 비동기 함수가 아니므로 await 제거
