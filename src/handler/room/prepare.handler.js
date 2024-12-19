@@ -29,13 +29,17 @@ export const gamePrepareHandler = async (socket, payload) => {
 
     // 게임 존재 여부
     const roomData = await redis.getHash('room', ownerUser.roomId);
+    const roleTypes = await redis.get('roleTypes');
+    const cardDeck = await redis.get('cardDeck');
+    const characterList = await redis.get('chfaracterList');
     let users = [];
-    const room = plainToInstance(Game, roomData);
-    for (const user of room.users) {
+    for (const user of roomData.users) {
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
       user.characterData = plainToInstance(CharacterData, user.characterData);
       users.push(plainToInstance(User, user));
     }
+    const room = plainToInstance(Game, roomData);
+    
     room.users = users;
 
     if (!room) {
@@ -50,12 +54,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     }
 
     room.gameStart();
-
-    const roleTypes = await redis.get('roleTypes');
-    const cardDeck = await redis.get('cardDeck');
-    const characterList = await redis.get('characterList');
-
-    await setUpGame(roleTypes, cardDeck, characterList, room);
+    setUpGame(roleTypes, cardDeck, characterList, room);
 
     // Notification에서 보내면 안되는 것: 본인이 아닌 handCards, target을 제외한 roleType
     // 카드 배분은 정상적으로 하고, 보내지만 않기
