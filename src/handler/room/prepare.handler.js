@@ -31,7 +31,7 @@ export const gamePrepareHandler = async (socket, payload) => {
     const roomData = await redis.getHash('room', ownerUser.roomId);
     const roleTypes = await redis.get('roleTypes');
     const cardDeck = await redis.get('cardDeck');
-    const characterList = await redis.get('chfaracterList');
+    const characterList = await redis.get('characterList');
     let users = [];
     for (const user of roomData.users) {
       user.characterData.handCards = new Map(Object.entries(user.characterData.handCards));
