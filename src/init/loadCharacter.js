@@ -6,7 +6,7 @@ export const loadCharactersFromDB = async () => {
     const redis = RedisManager.getInstance();
     const rows = await loadCharacters();
     const characterList = rows.map((row) => ({
-      type: row.id,
+      type: row.characterNum
     }));
 
     const loadedCharacterList = await redis.get('characterList')
