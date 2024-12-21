@@ -342,7 +342,7 @@ class User {
         },
         equips: this.characterData.equips,
         debuffs: this.characterData.debuffs,
-        handCards: this.getHandCardsToArray(),
+        handCards: this.characterData.handCards,//this.getHandCardsToArray(),
         bbangCount: this.characterData.bbangCount,
         handCardsCount: this.characterData.handCardsCount,
       },
