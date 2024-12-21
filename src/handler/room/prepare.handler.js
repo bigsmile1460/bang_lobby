@@ -20,7 +20,6 @@ export const gamePrepareHandler = async (socket, payload) => {
     const roomData = await redis.getHash('room', ownerUser.roomId);
     const shuffleCardDeck = shuffle(cardDeck);
     roomData.deck = shuffleCardDeck;
-    console.log('원본 덱 : ', roomData.deck);
     
     let isRunning = true;
     // 방장 존재 여부
@@ -77,7 +76,6 @@ export const gamePrepareHandler = async (socket, payload) => {
           try {
             const notificationPayload = gamePrepareNotification(room, user);
             const userSocket = await socketManager.getSocket(user.socket.jwt);
-            console.log(`${user.nickname}의 카드:`,user.characterData.handCards);
             if (userSocket && !userSocket.destroyed) {
               await userSocket.write(
                 createResponse(PACKET_TYPE.GAME_PREPARE_NOTIFICATION, 0, notificationPayload),
